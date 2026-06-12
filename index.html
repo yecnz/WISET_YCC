@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SugarFit Lab R&D</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">SF</div>
+          <div>
+            <strong>SugarFit Lab</strong>
+            <span>R&D 안전성 엔진</span>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="주요 화면">
+          <button class="nav-button active" data-tab="dashboard" title="대시보드">
+            <span aria-hidden="true">⌂</span>
+            대시보드
+          </button>
+          <button class="nav-button" data-tab="profile" title="타깃 조건">
+            <span aria-hidden="true">◐</span>
+            타깃 조건
+          </button>
+          <button class="nav-button" data-tab="formulas" title="배합 후보">
+            <span aria-hidden="true">◎</span>
+            배합 후보
+          </button>
+          <button class="nav-button" data-tab="survey" title="평가 입력">
+            <span aria-hidden="true">＋</span>
+            평가 입력
+          </button>
+          <button class="nav-button" data-tab="recommend" title="AI 추천">
+            <span aria-hidden="true">◆</span>
+            AI 추천
+          </button>
+        </nav>
+
+        <div class="study-card">
+          <span class="label">Project</span>
+          <p>맛 만족도와 섭취 안전성을 동시에 고려한 저당 음료 R&D 자동화 도구</p>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">저당 음료 R&D 자동화 MVP</p>
+            <h1>대체당 안전 상한을 먼저 통과한 배합만 AI가 추천합니다</h1>
+          </div>
+          <div class="top-actions">
+            <button id="resetData" class="ghost-button" type="button" title="샘플 데이터 초기화">↺</button>
+            <button id="exportCsv" class="primary-button" type="button">CSV 내보내기</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="tab-panel active">
+          <div class="metric-grid">
+            <article class="metric">
+              <span>평가 수</span>
+              <strong id="metricCount">0</strong>
+            </article>
+            <article class="metric">
+              <span>안전 통과율</span>
+              <strong id="metricAverage">0.0</strong>
+            </article>
+            <article class="metric">
+              <span>추천 배합</span>
+              <strong id="metricBest">-</strong>
+            </article>
+            <article class="metric">
+              <span>추천 대체당</span>
+              <strong id="metricSweetener">-</strong>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel wide-panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Preference Map</span>
+                  <h2>안전 여유도와 만족도</h2>
+                </div>
+              </div>
+              <canvas id="scatterChart" width="920" height="360" aria-label="안전 여유도와 만족도 산점도"></canvas>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Top Drivers</span>
+                  <h2>만족도 영향 요인</h2>
+                </div>
+              </div>
+              <div id="driverBars" class="bar-stack"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Segments</span>
+                  <h2>타깃군별 선호</h2>
+                </div>
+              </div>
+              <div id="segmentList" class="segment-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="profile" class="tab-panel">
+          <div class="profile-layout">
+            <form id="profileForm" class="panel profile-panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Personal Profile</span>
+                  <h2>타깃 소비자 조건</h2>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  개발 목표
+                  <select name="goal">
+                    <option value="sugarControl">혈당 관리</option>
+                    <option value="diet">체중 관리</option>
+                    <option value="fitness">운동/단백질 식단</option>
+                    <option value="daily">일상 저당 섭취</option>
+                  </select>
+                </label>
+                <label>
+                  음료 종류
+                  <select name="drinkType">
+                    <option>아이스티</option>
+                    <option>에이드</option>
+                    <option>요거트 드링크</option>
+                    <option>탄산 음료</option>
+                  </select>
+                </label>
+                <label>
+                  체중 기준(kg)
+                  <input name="weight" type="number" min="30" max="120" value="60" required />
+                </label>
+                <label>
+                  1회 제공량(ml)
+                  <input name="servingMl" type="number" min="100" max="700" value="350" required />
+                </label>
+                <label>
+                  목표 당도
+                  <select name="sweetPreference">
+                    <option value="mild">은은한 단맛</option>
+                    <option value="medium">보통 단맛</option>
+                    <option value="strong">강한 단맛</option>
+                  </select>
+                </label>
+                <label>
+                  선호 향
+                  <select name="flavorPreference">
+                    <option>복숭아</option>
+                    <option>레몬</option>
+                    <option>자몽</option>
+                    <option>베리</option>
+                  </select>
+                </label>
+                <label>
+                  위장 민감도
+                  <select name="giSensitivity">
+                    <option value="low">낮음</option>
+                    <option value="medium">보통</option>
+                    <option value="high">높음</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="checkbox-row">
+                <label><input name="avoidAftertaste" type="checkbox" /> 끝맛 민감</label>
+                <label><input name="lowCalorie" type="checkbox" checked /> 저칼로리 우선</label>
+              </div>
+
+              <button class="primary-button full-button" type="submit">조건 저장</button>
+            </form>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Current</span>
+                  <h2>안전성 엔진 기준</h2>
+                </div>
+              </div>
+              <div id="profileSummary" class="profile-summary"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="formulas" class="tab-panel">
+          <div class="section-toolbar">
+            <div>
+              <span class="label">Formula Library</span>
+              <h2>실험 배합 후보</h2>
+            </div>
+            <button id="openFormulaForm" class="primary-button" type="button">배합 추가</button>
+          </div>
+
+          <form id="formulaForm" class="inline-form hidden">
+            <label>
+              배합명
+              <input name="name" required placeholder="예: Peach-Lite 05" />
+            </label>
+            <label>
+              향
+              <select name="flavor">
+                <option>복숭아</option>
+                <option>레몬</option>
+                <option>자몽</option>
+                <option>베리</option>
+              </select>
+            </label>
+            <label>
+              대체당
+              <select name="sweetenerType">
+                <option>알룰로스</option>
+                <option>스테비아</option>
+                <option>에리스리톨</option>
+                <option>알룰로스+스테비아</option>
+                <option>알룰로스+에리스리톨</option>
+              </select>
+            </label>
+            <label>
+              대체당 비율(%)
+              <input name="sweetener" type="number" min="0" max="100" value="45" required />
+            </label>
+            <label>
+              산미
+              <input name="acid" type="number" min="1" max="7" value="4" required />
+            </label>
+            <label>
+              차 농도
+              <input name="tea" type="number" min="1" max="7" value="4" required />
+            </label>
+            <label>
+              당(g)
+              <input name="sugar" type="number" min="0" max="15" value="5" required />
+            </label>
+            <label>
+              칼로리(kcal)
+              <input name="calories" type="number" min="0" max="150" value="45" required />
+            </label>
+            <label>
+              대체당 총량(mg)
+              <input name="sweetenerMg" type="number" min="0" max="50000" value="1200" required />
+            </label>
+            <button class="primary-button" type="submit">저장</button>
+          </form>
+
+          <div id="formulaGrid" class="formula-grid"></div>
+        </section>
+
+        <section id="survey" class="tab-panel">
+          <div class="survey-layout">
+            <form id="surveyForm" class="panel survey-panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Sensory Test</span>
+                  <h2>관능평가 입력</h2>
+                </div>
+              </div>
+
+              <label>
+                참여자 그룹
+                <select name="segment">
+                  <option>헬스 관심</option>
+                  <option>카페 음료 선호</option>
+                  <option>다이어트 관심</option>
+                  <option>일반 소비자</option>
+                </select>
+              </label>
+
+              <label>
+                평가 배합
+                <select name="formulaId" id="formulaSelect"></select>
+              </label>
+
+              <div class="slider-grid">
+                <label>
+                  단맛 만족도
+                  <input name="sweetness" type="range" min="1" max="7" value="5" />
+                  <output>5</output>
+                </label>
+                <label>
+                  산미 균형
+                  <input name="balance" type="range" min="1" max="7" value="5" />
+                  <output>5</output>
+                </label>
+                <label>
+                  향 선호도
+                  <input name="aroma" type="range" min="1" max="7" value="5" />
+                  <output>5</output>
+                </label>
+                <label>
+                  입안 느낌
+                  <input name="mouthfeel" type="range" min="1" max="7" value="5" />
+                  <output>5</output>
+                </label>
+                <label>
+                  전체 만족도
+                  <input name="overall" type="range" min="1" max="7" value="5" />
+                  <output>5</output>
+                </label>
+                <label>
+                  재구매 의향
+                  <input name="repurchase" type="range" min="1" max="7" value="5" />
+                  <output>5</output>
+                </label>
+              </div>
+
+              <label>
+                자유 의견
+                <textarea name="comment" rows="4" placeholder="예: 단맛은 좋은데 끝맛이 조금 남음"></textarea>
+              </label>
+
+              <button class="primary-button full-button" type="submit">평가 저장</button>
+            </form>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Recent</span>
+                  <h2>최근 평가</h2>
+                </div>
+              </div>
+              <div id="recentReviews" class="review-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="recommend" class="tab-panel">
+          <div class="recommend-layout">
+            <section class="panel hero-recommend">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Next Experiment</span>
+                  <h2>다음 실험 배합 추천</h2>
+                </div>
+              </div>
+              <div id="recommendation" class="recommendation"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Why</span>
+                  <h2>안전성·추천 근거</h2>
+                </div>
+              </div>
+              <ul id="reasonList" class="reason-list"></ul>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
