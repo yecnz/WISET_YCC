@@ -371,43 +371,11 @@
                 <select name="formulaId" id="formulaSelect"></select>
               </label>
 
-              <div class="slider-grid">
-                <label>
-                  단맛 만족도
-                  <input name="sweetness" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
-                <label>
-                  설탕 유사도
-                  <input name="sugarLike" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
-                <label>
-                  끝맛 거부감
-                  <input name="aftertasteNeg" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
-                <label>
-                  바디감
-                  <input name="body" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
-                <label>
-                  향미 균형
-                  <input name="flavorBalance" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
-                <label>
-                  전체 기호도
-                  <input name="overall" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
-                <label>
-                  재구매 의향
-                  <input name="repurchase" type="range" min="1" max="7" value="4" />
-                  <output>4</output>
-                </label>
+              <div class="survey-progress-row">
+                <span class="label" style="margin: 0">평가 항목 (각 항목을 한 번씩 선택)</span>
+                <span id="surveyProgress" class="progress-chip">0/7 응답</span>
               </div>
+              <div id="likertList" class="likert-list"></div>
 
               <label>
                 자유 의견
@@ -415,6 +383,7 @@
               </label>
 
               <button class="primary-button full-button" type="submit">평가 저장</button>
+              <p id="surveyMessage" class="survey-message" hidden></p>
               <p class="form-hint">끝맛 거부감은 원점수로 저장되고 점수 계산 시 끝맛 안정성(8 − 점수)으로 역변환됩니다. 평가가 쌓이면 탐색 결과의 예측 점수가 자동으로 갱신됩니다.</p>
             </form>
 

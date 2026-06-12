@@ -77,6 +77,11 @@ const SENSORY_FIELDS = [
   ["repurchase", "재구매 의향"]
 ];
 
+// 역방향 항목: 점수가 높을수록 부정적 (저장은 원점수, 역변환은 점수 계산에서)
+const REVERSE_ITEMS = {
+  aftertasteNeg: "거부감이 없으면 1, 강할수록 7 — 높을수록 부정적입니다"
+};
+
 const RADAR_AXES = [
   ["sweetness", "단맛"],
   ["sugarLike", "설탕 유사"],
@@ -870,6 +875,55 @@ function renderFormulaOptions() {
     .join("");
 }
 
+// ── 관능평가 척도 (7칸 세그먼트, 탭 1회 입력) ──────────────
+function buildSurveyItems() {
+  const list = document.getElementById("likertList");
+  list.innerHTML = SENSORY_FIELDS.map(([key, label]) => {
+    const reverseHint = REVERSE_ITEMS[key];
+    return `
+      <fieldset class="likert-row" data-item="${key}">
+        <div class="likert-title">
+          <strong>${label}</strong>
+          ${reverseHint ? `<em class="badge-reverse">역방향</em>` : ""}
+        </div>
+        ${reverseHint ? `<p class="likert-hint">${reverseHint}</p>` : ""}
+        <div class="likert-scale" role="radiogroup" aria-label="${label}">
+          ${[1, 2, 3, 4, 5, 6, 7].map((value) => `
+            <label>
+              <input type="radio" name="${key}" value="${value}" />
+              <span>${value}</span>
+            </label>
+          `).join("")}
+        </div>
+        <div class="likert-anchors"><span>전혀 그렇지 않다</span><span>매우 그렇다</span></div>
+      </fieldset>
+    `;
+  }).join("");
+}
+
+function surveyAnsweredCount() {
+  const form = document.getElementById("surveyForm");
+  return SENSORY_FIELDS.filter(([key]) => form.elements[key].value !== "").length;
+}
+
+function updateSurveyProgress() {
+  document.getElementById("surveyProgress").textContent = `${surveyAnsweredCount()}/${SENSORY_FIELDS.length} 응답`;
+}
+
+function showSurveyMessage(text, isError) {
+  const message = document.getElementById("surveyMessage");
+  message.hidden = false;
+  message.textContent = text;
+  message.classList.toggle("survey-message-error", Boolean(isError));
+}
+
+function resetSurveyScores() {
+  document.querySelectorAll("#likertList input[type='radio']").forEach((radio) => (radio.checked = false));
+  document.querySelectorAll("#likertList .likert-missing").forEach((row) => row.classList.remove("likert-missing"));
+  document.getElementById("surveyForm").comment.value = "";
+  updateSurveyProgress();
+}
+
 function renderRecentReviews() {
   const recentReviews = document.getElementById("recentReviews");
   const reviews = [...state.reviews].slice(-6).reverse();
@@ -1261,13 +1315,6 @@ function switchTab(tabId) {
 }
 
 // ── 이벤트 ─────────────────────────────────────────────────
-document.querySelectorAll("input[type='range']").forEach((range) => {
-  const output = range.parentElement.querySelector("output");
-  range.addEventListener("input", () => {
-    output.textContent = range.value;
-  });
-});
-
 document.querySelectorAll(".nav-button").forEach((tabButton) => {
   tabButton.addEventListener("click", () => switchTab(tabButton.dataset.tab));
 });
@@ -1383,31 +1430,57 @@ document.getElementById("formulaForm").addEventListener("submit", (event) => {
   render();
 });
 
+// 척도 선택: 진행 카운터 갱신 + 미응답 강조 해제
+document.getElementById("likertList").addEventListener("change", (event) => {
+  event.target.closest(".likert-row")?.classList.remove("likert-missing");
+  updateSurveyProgress();
+});
+
+// 숫자키 1~7로 빠른 입력 (항목에 포커스가 있을 때)
+document.getElementById("likertList").addEventListener("keydown", (event) => {
+  if (!/^[1-7]$/.test(event.key)) return;
+  const row = event.target.closest(".likert-row");
+  if (!row) return;
+  const radio = row.querySelector(`input[value="${event.key}"]`);
+  if (radio) {
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+    event.preventDefault();
+  }
+});
+
 document.getElementById("surveyForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.currentTarget));
+  const form = event.currentTarget;
+
+  // 미응답 항목이 있으면 제출 차단 + 해당 항목 강조
+  const missing = SENSORY_FIELDS.filter(([key]) => form.elements[key].value === "");
+  if (missing.length) {
+    missing.forEach(([key]) => {
+      document.querySelector(`.likert-row[data-item="${key}"]`)?.classList.add("likert-missing");
+    });
+    const first = document.querySelector(`.likert-row[data-item="${missing[0][0]}"]`);
+    first?.scrollIntoView({ behavior: "smooth", block: "center" });
+    showSurveyMessage(`${missing.length}개 항목이 미응답입니다. 표시된 항목을 선택해 주세요.`, true);
+    return;
+  }
+
+  const data = Object.fromEntries(new FormData(form));
   state.reviews.push(
     makeReview(
       data.segment,
       data.formulaId,
-      [
-        Number(data.sweetness),
-        Number(data.sugarLike),
-        Number(data.aftertasteNeg),
-        Number(data.body),
-        Number(data.flavorBalance),
-        Number(data.overall),
-        Number(data.repurchase)
-      ],
+      SENSORY_FIELDS.map(([key]) => Number(data[key])),
       data.comment
     )
   );
-  event.currentTarget.reset();
-  document.querySelectorAll("#surveyForm input[type='range']").forEach((range) => {
-    range.value = 4;
-    range.parentElement.querySelector("output").textContent = "4";
-  });
   saveState();
+
+  // 연속 입력: 평가 대상·참여자 그룹은 유지하고 점수·의견만 초기화
+  const target = formulaById(data.formulaId);
+  const targetName = target ? (target.kind === "batch" ? target.blindCode : target.name) : "평가 대상";
+  resetSurveyScores();
+  showSurveyMessage(`${targetName} 평가가 저장되었습니다. (해당 대상 누적 ${reviewsForFormula(data.formulaId).length}건)`, false);
   render();
 });
 
@@ -1498,6 +1571,8 @@ function resetAll() {
   saveState();
   fillWizardForm(state.project);
   wizardStep = 1;
+  resetSurveyScores();
+  document.getElementById("surveyMessage").hidden = true;
   render();
 }
 
@@ -1516,5 +1591,7 @@ window.addEventListener("resize", () => {
   }
 });
 
+buildSurveyItems();
+updateSurveyProgress();
 fillWizardForm(state.project);
 render();
