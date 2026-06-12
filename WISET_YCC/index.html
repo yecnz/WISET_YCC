@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SugarFit Lab R&D</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">SF</div>
+          <div>
+            <strong>SugarFit Lab</strong>
+            <span>R&D 안전성 엔진</span>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="주요 화면">
+          <span class="nav-section">워크플로</span>
+          <button class="nav-button active" data-tab="home">홈</button>
+          <button class="nav-button" data-tab="explore">배합 탐색</button>
+          <button class="nav-button" data-tab="results">탐색 결과</button>
+          <button class="nav-button" data-tab="survey">평가 입력</button>
+          <span class="nav-section">관리</span>
+          <button class="nav-button" data-tab="library">라이브러리</button>
+          <button class="nav-button" data-tab="rules">룰 테이블</button>
+          <button class="nav-button" data-tab="data">데이터 관리</button>
+        </nav>
+
+        <div class="study-card">
+          <span class="label">Project</span>
+          <p>맛 만족도와 섭취 안전성을 동시에 고려한 저당 음료 R&D 자동화 도구</p>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1 id="pageTitle">홈</h1>
+            <p id="pageDesc" class="page-desc">맛 만족도와 섭취 안전성을 동시에 고려한 저당 음료 배합 R&D 자동화 도구</p>
+          </div>
+          <div class="top-actions">
+            <button id="resetData" class="ghost-button" type="button" title="샘플 데이터 초기화">초기화</button>
+            <button id="exportCsv" class="ghost-button" type="button">관능 CSV</button>
+          </div>
+        </header>
+
+        <!-- ───────── 홈 ───────── -->
+        <section id="home" class="tab-panel active">
+          <section class="hero-panel">
+            <h2>조건 4단계만 입력하면,<br />수백 개 배합을 자동 탐색합니다</h2>
+            <p>안전 상한과 원가·라벨링 제약을 통과한 배합만 관능 예측 점수로 정렬해 추천하고, 실험 시트와 평가 입력으로 능동학습 루프를 잇습니다.</p>
+            <button id="startWizard" class="primary-button" type="button">새 배합 탐색 시작</button>
+          </section>
+
+          <div class="metric-grid">
+            <article class="metric">
+              <span>관능 데이터</span>
+              <strong id="homeReviewCount">0</strong>
+            </article>
+            <article class="metric">
+              <span>실험 배치</span>
+              <strong id="homeBatchCount">0</strong>
+            </article>
+            <article class="metric">
+              <span>최근 탐색 통과</span>
+              <strong id="homePassCount">-</strong>
+            </article>
+            <article class="metric">
+              <span>현재 추천</span>
+              <strong id="homeBest">-</strong>
+            </article>
+          </div>
+
+          <div class="flow-grid">
+            <article class="flow-card">
+              <span class="flow-step">1</span>
+              <h2>조건 정의</h2>
+              <p>음료 스펙과 타깃 소비자 조건을 입력합니다. 페르소나 프리셋으로 한 번에 채울 수 있습니다.</p>
+            </article>
+            <article class="flow-card">
+              <span class="flow-step">2</span>
+              <h2>자동 탐색</h2>
+              <p>보유 원료의 2~3종 조합을 10% 단위로 전수 생성하고, 안전성 엔진과 원가·라벨링 제약으로 거릅니다.</p>
+            </article>
+            <article class="flow-card">
+              <span class="flow-step">3</span>
+              <h2>실험 루프</h2>
+              <p>추천 배합을 실험 시트로 내보내 제조하고, 관능평가를 입력하면 다음 추천이 더 정확해집니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- ───────── 배합 탐색 (위저드) ───────── -->
+        <section id="explore" class="tab-panel">
+          <section class="panel wizard-panel">
+            <div class="step-indicator" id="stepIndicator">
+              <button type="button" class="step-dot" data-step="1"><i>1</i>제품 정의</button>
+              <button type="button" class="step-dot" data-step="2"><i>2</i>타깃 조건</button>
+              <button type="button" class="step-dot" data-step="3"><i>3</i>원료·제약</button>
+              <button type="button" class="step-dot" data-step="4"><i>4</i>탐색 실행</button>
+            </div>
+
+            <form id="wizardForm">
+              <fieldset class="wizard-step" data-step="1">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Step 1</span>
+                    <h2>어떤 음료를 만드나요?</h2>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    음료 종류
+                    <select name="drinkType">
+                      <option>아이스티</option>
+                      <option>에이드</option>
+                      <option>요거트 드링크</option>
+                      <option>탄산 음료</option>
+                    </select>
+                  </label>
+                  <label>
+                    1회 제공량(ml)
+                    <input name="servingMl" type="number" min="100" max="700" value="350" required />
+                  </label>
+                  <label>
+                    목표 당도
+                    <select name="sweetPreference">
+                      <option value="mild">은은한 단맛 (당도 5%)</option>
+                      <option value="medium">보통 단맛 (당도 7%)</option>
+                      <option value="strong">강한 단맛 (당도 9%)</option>
+                    </select>
+                  </label>
+                </div>
+                <p class="form-hint">음료 종류를 바꾸면 권장 당도가 자동으로 설정됩니다. 직접 바꿔도 됩니다.</p>
+              </fieldset>
+
+              <fieldset class="wizard-step hidden" data-step="2">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Step 2</span>
+                    <h2>누가 마시나요?</h2>
+                  </div>
+                </div>
+                <div class="preset-row" id="presetRow">
+                  <button type="button" class="preset-button" data-preset="general">일반 소비자</button>
+                  <button type="button" class="preset-button" data-preset="glucose">혈당 관리형</button>
+                  <button type="button" class="preset-button" data-preset="gut">위장 민감형</button>
+                </div>
+                <div class="form-grid">
+                  <label>
+                    체중 기준(kg)
+                    <input name="weight" type="number" min="30" max="120" value="60" required />
+                  </label>
+                  <label>
+                    위장 민감도
+                    <select name="giSensitivity">
+                      <option value="low">둔감</option>
+                      <option value="medium">보통</option>
+                      <option value="high">예민</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="checkbox-row">
+                  <label><input name="glucoseCare" type="checkbox" /> 혈당 관리 (GI 높은 성분 제외)</label>
+                  <label><input name="avoidAftertaste" type="checkbox" /> 끝맛 민감 (고감미료 감점)</label>
+                </div>
+              </fieldset>
+
+              <fieldset class="wizard-step hidden" data-step="3">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Step 3</span>
+                    <h2>어떤 원료와 제약으로 탐색하나요?</h2>
+                  </div>
+                </div>
+                <div id="ingredientPicker" class="ingredient-picker"></div>
+                <div class="form-grid">
+                  <label>
+                    1잔 원가 상한(원) — 0이면 무제한
+                    <input name="costCapKrw" type="number" min="0" max="5000" value="0" />
+                  </label>
+                  <label class="checkbox-inline">
+                    <span>라벨링 조건</span>
+                    <span class="checkbox-row" style="margin-top:0">
+                      <label><input name="naturalOnly" type="checkbox" /> 천연 유래 원료만 사용</label>
+                    </span>
+                  </label>
+                </div>
+                <p class="form-hint">원료 단가는 룰 테이블에서 수정할 수 있습니다(현재 mock 수치).</p>
+              </fieldset>
+
+              <fieldset class="wizard-step hidden" data-step="4">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Step 4</span>
+                    <h2>탐색 조건 확인</h2>
+                  </div>
+                </div>
+                <div id="wizardSummary" class="wizard-summary"></div>
+                <p class="form-hint">실행하면 선택한 원료의 단독·2종·3종 조합을 10% 비중 단위로 전수 생성해 안전성·제약 필터를 통과한 배합만 점수화합니다.</p>
+              </fieldset>
+
+              <div class="wizard-nav">
+                <button type="button" id="wizardPrev" class="ghost-button wide-ghost">이전</button>
+                <button type="button" id="wizardNext" class="primary-button">다음</button>
+                <button type="submit" id="wizardRun" class="primary-button hidden">자동 탐색 실행</button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <!-- ───────── 탐색 결과 ───────── -->
+        <section id="results" class="tab-panel">
+          <div id="resultsEmpty" class="panel hero-panel hidden">
+            <span class="label">Results</span>
+            <h2>아직 탐색 결과가 없습니다</h2>
+            <p>배합 탐색 위저드에서 조건을 입력하고 자동 탐색을 실행해 주세요.</p>
+            <button class="primary-button" type="button" id="goWizard">배합 탐색으로 이동</button>
+          </div>
+
+          <div id="resultsBody">
+            <div class="metric-grid">
+              <article class="metric">
+                <span>탐색 후보</span>
+                <strong id="metricSearched">-</strong>
+              </article>
+              <article class="metric">
+                <span>안전·제약 통과</span>
+                <strong id="metricPassed">-</strong>
+              </article>
+              <article class="metric">
+                <span>추천 배합</span>
+                <strong id="metricBest">-</strong>
+              </article>
+              <article class="metric">
+                <span>맛 만족도 유지율</span>
+                <strong id="metricRetention">-</strong>
+              </article>
+            </div>
+
+            <div class="recommend-layout">
+              <section class="panel hero-recommend">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Best Match</span>
+                    <h2>추천 배합과 대안</h2>
+                  </div>
+                </div>
+                <div id="recommendation" class="recommendation"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Why</span>
+                    <h2>안전성·추천 근거</h2>
+                  </div>
+                </div>
+                <ul id="reasonList" class="reason-list"></ul>
+                <div id="calcDetails"></div>
+                <div id="sensitivityBox"></div>
+              </section>
+
+              <section class="panel radar-panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Sensory Profile</span>
+                    <h2>추천 vs 대안 관능 프로파일 (예측)</h2>
+                  </div>
+                </div>
+                <div id="radarLegend" class="chart-legend"></div>
+                <canvas id="radarChart" width="920" height="380" aria-label="추천과 대안의 관능 프로파일 레이더 차트"></canvas>
+              </section>
+            </div>
+
+            <div class="dashboard-grid result-charts">
+              <section class="panel wide-panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Preference Map</span>
+                    <h2>안전 여유도와 관능 예측점수</h2>
+                  </div>
+                </div>
+                <canvas id="scatterChart" width="920" height="360" aria-label="안전 여유도와 만족도 산점도"></canvas>
+                <p class="chart-note">통과 후보 상위 40개. 점이 클수록 최종 점수가 높습니다.</p>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Ranking</span>
+                    <h2>통과 배합 상위 10</h2>
+                  </div>
+                </div>
+                <div id="scoreBars" class="bar-stack"></div>
+                <p class="chart-note" id="rankingNote"></p>
+              </section>
+            </div>
+
+            <div class="metric-grid compare-headline">
+              <article class="metric">
+                <span>당류 감소율</span>
+                <strong id="compareSugar">-</strong>
+              </article>
+              <article class="metric">
+                <span>칼로리 감소율</span>
+                <strong id="compareKcal">-</strong>
+              </article>
+              <article class="metric">
+                <span>맛 만족도 유지율</span>
+                <strong id="compareRetention">-</strong>
+              </article>
+            </div>
+
+            <div class="compare-grid">
+              <section class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Side by Side</span>
+                    <h2>설탕 대조군 vs 추천 배합</h2>
+                  </div>
+                </div>
+                <div id="compareCards" class="compare-cards"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="label">Sensory Items</span>
+                    <h2>관능 항목별 비교</h2>
+                  </div>
+                </div>
+                <div id="compareLegend" class="chart-legend"></div>
+                <div id="compareBars" class="bar-stack"></div>
+                <p class="chart-note">설탕 대조군 점수는 관능 데이터셋의 대조군 평가 평균, 추천 배합 점수는 유사 배합 기반 예측값입니다.</p>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <!-- ───────── 평가 입력 ───────── -->
+        <section id="survey" class="tab-panel">
+          <div class="survey-layout">
+            <form id="surveyForm" class="panel survey-panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Sensory Test</span>
+                  <h2>관능평가 입력 (7점 척도)</h2>
+                </div>
+              </div>
+
+              <label>
+                참여자 그룹
+                <select name="segment">
+                  <option>헬스 관심</option>
+                  <option>카페 음료 선호</option>
+                  <option>다이어트 관심</option>
+                  <option>일반 소비자</option>
+                </select>
+              </label>
+
+              <label>
+                평가 대상 (실험 배치는 블라인드 코드로 표시)
+                <select name="formulaId" id="formulaSelect"></select>
+              </label>
+
+              <div class="slider-grid">
+                <label>
+                  단맛 만족도
+                  <input name="sweetness" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+                <label>
+                  설탕 유사도
+                  <input name="sugarLike" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+                <label>
+                  끝맛 거부감
+                  <input name="aftertasteNeg" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+                <label>
+                  바디감
+                  <input name="body" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+                <label>
+                  향미 균형
+                  <input name="flavorBalance" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+                <label>
+                  전체 기호도
+                  <input name="overall" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+                <label>
+                  재구매 의향
+                  <input name="repurchase" type="range" min="1" max="7" value="4" />
+                  <output>4</output>
+                </label>
+              </div>
+
+              <label>
+                자유 의견
+                <textarea name="comment" rows="4" placeholder="예: 단맛은 좋은데 끝맛이 조금 남음"></textarea>
+              </label>
+
+              <button class="primary-button full-button" type="submit">평가 저장</button>
+              <p class="form-hint">끝맛 거부감은 원점수로 저장되고 점수 계산 시 끝맛 안정성(8 − 점수)으로 역변환됩니다. 평가가 쌓이면 탐색 결과의 예측 점수가 자동으로 갱신됩니다.</p>
+            </form>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div>
+                  <span class="label">Recent</span>
+                  <h2>최근 평가</h2>
+                </div>
+              </div>
+              <div id="recentReviews" class="review-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- ───────── 라이브러리 ───────── -->
+        <section id="library" class="tab-panel">
+          <div class="section-toolbar">
+            <div>
+              <span class="label">Experiment Batches</span>
+              <h2>실험 배치</h2>
+            </div>
+          </div>
+          <div id="batchList" class="formula-grid"></div>
+
+          <div class="section-toolbar library-toolbar">
+            <div>
+              <span class="label">Formula Library</span>
+              <h2>기준·커스텀 배합</h2>
+            </div>
+            <button id="openFormulaForm" class="primary-button" type="button">내 배합 추가</button>
+          </div>
+
+          <form id="formulaForm" class="inline-form hidden">
+            <label>
+              배합명
+              <input name="name" required placeholder="예: 알룰로스·스테비아 7:3" />
+            </label>
+            <label>
+              알룰로스 비중(%)
+              <input name="share_allulose" type="number" min="0" max="100" value="70" />
+            </label>
+            <label>
+              에리스리톨 비중(%)
+              <input name="share_erythritol" type="number" min="0" max="100" value="0" />
+            </label>
+            <label>
+              말티톨 비중(%)
+              <input name="share_maltitol" type="number" min="0" max="100" value="0" />
+            </label>
+            <label>
+              수크랄로스 비중(%)
+              <input name="share_sucralose" type="number" min="0" max="100" value="0" />
+            </label>
+            <label>
+              스테비아 비중(%)
+              <input name="share_stevia" type="number" min="0" max="100" value="30" />
+            </label>
+            <button class="primary-button" type="submit">저장</button>
+          </form>
+          <p class="form-hint">비중은 단맛 기여 기준이며 합이 100%가 되어야 합니다. 등록한 배합은 평가 대상에 추가되고, 평가가 쌓이면 예측 엔진의 학습 데이터로 쓰입니다.</p>
+
+          <div id="formulaGrid" class="formula-grid"></div>
+        </section>
+
+        <!-- ───────── 룰 테이블 ───────── -->
+        <section id="rules" class="tab-panel">
+          <div class="section-toolbar">
+            <div>
+              <span class="label">Rule Table</span>
+              <h2>성분 룰 테이블 (출처·버전 포함)</h2>
+            </div>
+            <div class="top-actions">
+              <button id="ruleReset" class="ghost-button wide-ghost" type="button">기본값 복원</button>
+              <button id="ruleSave" class="primary-button" type="button">변경 저장</button>
+            </div>
+          </div>
+          <section class="panel">
+            <div class="rule-table-wrap">
+              <table class="rule-table" id="ruleTable"></table>
+            </div>
+            <p class="chart-note">감미도·ADI·GI는 안전성 직접 관련 값이라 화면에서 수정할 수 없습니다(원자료 검증 후 코드 룰 테이블에서 갱신). 맛 상한선과 단가는 자사 기준으로 조정할 수 있습니다. "검증 전" 배지는 식약처·FDA·EFSA 원자료 재확인이 필요한 mock 수치입니다.</p>
+          </section>
+        </section>
+
+        <!-- ───────── 데이터 관리 ───────── -->
+        <section id="data" class="tab-panel">
+          <div class="metric-grid">
+            <article class="metric">
+              <span>관능 데이터</span>
+              <strong id="dataReviewCount">0</strong>
+            </article>
+            <article class="metric">
+              <span>배합 (기준+커스텀)</span>
+              <strong id="dataFormulaCount">0</strong>
+            </article>
+            <article class="metric">
+              <span>실험 배치</span>
+              <strong id="dataBatchCount">0</strong>
+            </article>
+            <article class="metric">
+              <span>룰 수정 항목</span>
+              <strong id="dataOverrideCount">0</strong>
+            </article>
+          </div>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="label">Project File</span>
+                <h2>프로젝트 내보내기 / 가져오기</h2>
+              </div>
+            </div>
+            <p class="chart-note">로그인 없이 파일로 프로젝트를 보관·공유합니다. JSON에는 탐색 조건, 배합·배치, 관능 데이터, 룰 수정값이 모두 포함됩니다.</p>
+            <div class="data-actions">
+              <button id="exportJson" class="primary-button" type="button">프로젝트 JSON 내보내기</button>
+              <label class="ghost-button file-button">
+                JSON 가져오기
+                <input id="importJson" type="file" accept="application/json" hidden />
+              </label>
+              <button id="exportCsv2" class="ghost-button wide-ghost" type="button">관능 CSV 내보내기</button>
+              <button id="resetAll" class="ghost-button wide-ghost" type="button">전체 초기화</button>
+            </div>
+            <p id="dataMessage" class="form-hint"></p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sugarfit-lab",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "WISET_YCC", "-p", "4173", "-c-1"],
+      "port": 4173
+    }
+  ]
+}
